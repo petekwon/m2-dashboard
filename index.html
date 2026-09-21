@@ -264,7 +264,7 @@
       <h3 style="margin-top:0">Data policy</h3>
       <div class="note">
         <strong>In-browser:</strong> BTC & ETH prices (CoinGecko), 200W MA from weekly candles (Binance.US, Coinbase fallback).<br><br>
-        <strong>Scheduled feed:</strong> 10Y yield (FRED), Global M2 proxy (FRED + ECB), BTC/ETH ETF flows (SoSoValue).<br><br>
+        <strong>Scheduled feed:</strong> 10Y yield (FRED), US + Euro Area M2 YoY, USD-adjusted (FRED + ECB), BTC/ETH ETF flows (SoSoValue).<br><br>
         Each metric carries its own observation date. Stale after 4 days (ETF), 5 days (10Y), 8 days (200W MA) or 100 days (M2, which publishes with a lag).
       </div>
     </div>
@@ -288,7 +288,7 @@
   //   Browser-direct (CORS-friendly, no key): CoinGecko prices, BTC weekly candles
   //     for the 200W MA (Binance.US, Coinbase fallback).
   //   Feed file (written by fetch_dashboard_data.py on a schedule): 10Y yield,
-  //     Global M2 proxy, BTC/ETH ETF 5-session flows, and a server-side 200W MA.
+  //     US + Euro Area M2 YoY (USD-adjusted), BTC/ETH ETF 5-session flows, and a server-side 200W MA.
   //   Manual overrides: any value you save by hand wins until a newer automated
   //     observation arrives.
   // ---------------------------------------------------------------------------
@@ -299,7 +299,7 @@
   // ETF: 4 covers a weekend; 10Y: FRED posts with a one-day lag; M2: monthly with ~5-7 week lag.
   const MAX_AGE = { ma200w: 8, btcEtf5d: 4, ethEtf5d: 4, us10y: 5, m2YoY: 100 };
   const RANGE = { ma200w: [1000, 500000], btcEtf5d: [-25, 25], ethEtf5d: [-15, 15], m2YoY: [-20, 30], us10y: [0, 20] };
-  const NAMES = { ma200w: 'BTC 200W MA', btcEtf5d: 'BTC ETF 5-session flow', ethEtf5d: 'ETH ETF 5-session flow', m2YoY: 'Global M2 YoY', us10y: 'U.S. 10Y yield' };
+  const NAMES = { ma200w: 'BTC 200W MA', btcEtf5d: 'BTC ETF 5-session flow', ethEtf5d: 'ETH ETF 5-session flow', m2YoY: 'US + Euro Area M2 YoY', us10y: 'U.S. 10Y yield' };
 
   const DEFAULTS = {
     btcPrice: null, ethPrice: null, btc24h: null, eth24h: null,
@@ -563,7 +563,7 @@
     score += yieldScore; factors.push({name:'10Y Yield', score:yieldScore, max:2, text:data.us10y < 4.25 ? 'Supportive' : data.us10y < 4.75 ? 'Mixed' : 'Headwind'});
 
     let m2Score = data.m2YoY >= 5 ? 2 : data.m2YoY >= 3 ? 1 : 0;
-    score += m2Score; factors.push({name:'Global M2', score:m2Score, max:2, text:data.m2YoY >= 5 ? 'Liquidity flood' : data.m2YoY >= 3 ? 'Improving' : 'Not yet accelerating'});
+    score += m2Score; factors.push({name:'US+EA M2)', score:m2Score, max:2, text:data.m2YoY >= 5 ? 'Liquidity flood' : data.m2YoY >= 3 ? 'Improving' : 'Not yet accelerating'});
 
     let action, cls, badge;
     if (brokenCritical.length) {
@@ -630,7 +630,7 @@
 
     const rows = [
       {
-        metric: 'Global M2 YoY',
+        metric: 'US + Euro Area M2 YoY (USD-adjusted)',
         value: isFiniteNumber(data.m2YoY) ? `${data.m2YoY.toFixed(2)}%` : '—',
         status: m2,
         signal: data.m2YoY >= 5 ? 'Strong liquidity tailwind' : data.m2YoY >= 3 ? 'Liquidity improving' : 'Wait for stronger acceleration',
@@ -689,7 +689,7 @@
     const brokenCount = Object.values(health).filter(h => h.level === 'bad').length;
     document.getElementById('broken-alert').style.display = brokenCount > 0 ? 'block' : 'none';
 
-    const healthNames = { live:'CoinGecko live prices', ma:'BTC 200W MA', btcEtf:'BTC ETF 5-session flow', ethEtf:'ETH ETF 5-session flow', m2:'Global M2 YoY', us10y:'U.S. 10Y yield', feed:'Scheduled data feed' };
+    const healthNames = { live:'CoinGecko live prices', ma:'BTC 200W MA', btcEtf:'BTC ETF 5-session flow', ethEtf:'ETH ETF 5-session flow', m2:'US + Euro Area M2 YoY', us10y:'U.S. 10Y yield', feed:'Scheduled data feed' };
     document.getElementById('health-panel').innerHTML = Object.entries(health).map(([k,h]) => `
       <div class="health-item"><div class="health-title">${healthLabel(h)} ${healthNames[k]}</div><div class="note">${escapeHtml(h.text)}</div></div>`).join('');
 
@@ -697,7 +697,7 @@
     if (ratio != null) insights.push(`BTC is ${ratio.toFixed(2)}× its 200-week MA: ${rStatus.label.toLowerCase()} territory.`);
     if (isFiniteNumber(data.btcEtf5d)) insights.push(`BTC ETF flow over the last 5 trading sessions is ${data.btcEtf5d >= 0 ? 'positive' : 'negative'} at ${data.btcEtf5d >= 0 ? '+' : '-'}$${Math.abs(data.btcEtf5d).toFixed(2)}B.`);
     if (isFiniteNumber(data.ethEtf5d)) insights.push(`ETH ETF flow over the last 5 trading sessions is ${data.ethEtf5d >= 0 ? 'positive' : 'negative'} at ${data.ethEtf5d >= 0 ? '+' : '-'}$${Math.abs(data.ethEtf5d).toFixed(2)}B.`);
-    if (isFiniteNumber(data.m2YoY)) insights.push(`Global M2 YoY is ${data.m2YoY.toFixed(2)}%; the dashboard only treats ≥5% as a strong liquidity-flood signal.`);
+    if (isFiniteNumber(data.m2YoY)) insights.push(`US + Euro Area M2 YoY (USD-adjusted) is ${data.m2YoY.toFixed(2)}%; the dashboard only treats ≥5% as a strong liquidity-flood signal.`);
     if (isFiniteNumber(data.us10y)) insights.push(`10Y Treasury is ${data.us10y.toFixed(2)}%; falling yields would improve the macro backdrop for crypto.`);
     document.getElementById('insights').innerHTML = insights.map(i => `<li>${i}</li>`).join('');
 
