@@ -1,0 +1,41 @@
+name: Update dashboard data
+
+on:
+  schedule:
+    # 13:30 UTC Tue–Sat: prior session's ETF flows are final (late issuer reports are in).
+    - cron: "30 13 * * 2-6"
+    # 23:00 UTC Mon–Fri: picks up FRED's one-day-lagged 10Y print and same-day SoSoValue update.
+    - cron: "0 23 * * 1-5"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write   # needed only to commit dashboard-data.json
+
+concurrency:
+  group: dashboard-data
+  cancel-in-progress: false
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      # Pin these to full commit SHAs if you want supply-chain hardening.
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Fetch inputs
+        env:
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+          SOSO_API_KEY: ${{ secrets.SOSO_API_KEY }}
+        run: python fetch_dashboard_data.py
+
+      - name: Commit if changed
+        run: |
+          git config user.name  "dashboard-bot"
+          git config user.email "dashboard-bot@users.noreply.github.com"
+          git add dashboard-data.json
+          git diff --cached --quiet || git commit -m "data: refresh $(date -u +%Y-%m-%dT%H:%MZ)"
+          git push

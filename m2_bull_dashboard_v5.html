@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>M2 Bull Dashboard v5</title>
+  <style>
+    :root {
+      --bg: #090b10;
+      --card: #151927;
+      --card-2: #101625;
+      --text: #e9eef7;
+      --muted: #8e9aae;
+      --accent: #16d5ff;
+      --green: #2ecc71;
+      --yellow: #f7c948;
+      --orange: #ff922b;
+      --red: #ef476f;
+      --border: #2b3347;
+      --blue: #4dabf7;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, #0d1420 0%, var(--bg) 40%);
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    .container { max-width: 1180px; margin: 0 auto; padding: 28px 18px 60px; }
+    .header { text-align: center; margin-bottom: 18px; }
+    .header h1 { margin: 0; color: var(--accent); font-size: clamp(1.8rem, 4vw, 2.6rem); }
+    .header .subtitle { color: var(--muted); margin-top: 8px; }
+    #last-update { text-align: center; color: var(--muted); margin: 10px 0 22px; font-size: .9rem; }
+
+    .grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 16px; }
+    .card {
+      background: linear-gradient(180deg, rgba(26,31,47,.98), rgba(18,22,34,.98));
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: 0 12px 28px rgba(0,0,0,.28);
+    }
+    .main-card { grid-column: span 12; padding: 18px; }
+    .small-card { grid-column: span 4; padding: 16px; }
+    .wide-card { grid-column: span 8; padding: 16px; }
+
+    @media (max-width: 900px) {
+      .small-card, .wide-card { grid-column: span 12; }
+    }
+
+    table { width: 100%; border-collapse: collapse; overflow: hidden; }
+    th, td { padding: 14px 12px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
+    th { background: #14203a; color: var(--accent); font-weight: 700; }
+    tbody tr:last-child td { border-bottom: 0; }
+
+    .status {
+      display: inline-block;
+      min-width: 108px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: .82rem;
+      font-weight: 800;
+      text-align: center;
+      white-space: nowrap;
+    }
+    .green { background: var(--green); color: #08140c; }
+    .yellow { background: var(--yellow); color: #211a00; }
+    .orange { background: var(--orange); color: #211100; }
+    .red { background: var(--red); color: #2a0710; }
+
+    .signal { font-weight: 700; }
+    .source { color: var(--muted); font-size: .82rem; margin-top: 4px; }
+    .fresh { color: var(--green); }
+    .stale { color: var(--yellow); }
+    .broken { color: var(--red); }
+    .health-dot { display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:6px; vertical-align:middle; }
+    .dot-ok { background: var(--green); box-shadow: 0 0 8px rgba(46,204,113,.45); }
+    .dot-warn { background: var(--yellow); box-shadow: 0 0 8px rgba(247,201,72,.35); }
+    .dot-bad { background: var(--red); box-shadow: 0 0 8px rgba(239,71,111,.45); }
+    .health-panel { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin-top:12px; }
+    .health-item { background:#0d1320; border:1px solid var(--border); border-radius:10px; padding:10px 12px; font-size:.85rem; }
+    .health-title { font-weight:800; margin-bottom:3px; }
+    @media (max-width: 760px) { .health-panel { grid-template-columns:1fr; } }
+
+
+    .recommendation-card {
+      margin: 0 0 18px; padding: 18px 20px; border-radius: 16px; border: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(20,32,58,.95), rgba(15,20,34,.95));
+      box-shadow: 0 12px 28px rgba(0,0,0,.24);
+    }
+    .rec-top { display:flex; gap:16px; justify-content:space-between; align-items:center; flex-wrap:wrap; }
+    .rec-label { color:var(--muted); font-size:.82rem; text-transform:uppercase; letter-spacing:.08em; font-weight:800; }
+    .rec-action { font-size:clamp(1.45rem,4vw,2.2rem); font-weight:900; margin-top:3px; }
+    .rec-score { font-size:1.05rem; font-weight:800; color:var(--accent); }
+    .rec-badge { display:inline-block; padding:7px 12px; border-radius:999px; font-weight:900; font-size:.82rem; }
+    .rec-aggressive { background:rgba(46,204,113,.18); color:#8df0b2; border:1px solid rgba(46,204,113,.4); }
+    .rec-buy { background:rgba(77,171,247,.16); color:#a8d8ff; border:1px solid rgba(77,171,247,.4); }
+    .rec-hold { background:rgba(247,201,72,.14); color:#ffe18a; border:1px solid rgba(247,201,72,.4); }
+    .rec-defensive, .rec-data { background:rgba(239,71,111,.14); color:#ff9db2; border:1px solid rgba(239,71,111,.4); }
+    .score-bar { height:10px; background:#0b1020; border:1px solid var(--border); border-radius:999px; overflow:hidden; margin:12px 0 8px; }
+    .score-fill { height:100%; background:linear-gradient(90deg, #ef476f 0%, #f7c948 45%, #2ecc71 100%); width:0%; transition:width .25s ease; }
+    .rec-grid { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:8px; margin-top:12px; }
+    .rec-factor { background:#0d1320; border:1px solid var(--border); border-radius:10px; padding:9px 10px; font-size:.8rem; }
+    .rec-factor strong { display:block; margin-bottom:2px; }
+    @media (max-width:850px) { .rec-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+    @media (max-width:520px) { .rec-grid { grid-template-columns:1fr; } }
+
+    .alert {
+      display: none;
+      margin: 0 0 16px;
+      padding: 14px 16px;
+      border-radius: 12px;
+      font-weight: 800;
+      text-align: center;
+      border: 1px solid var(--border);
+    }
+    .alert.bull { background: rgba(46,204,113,.12); color: #8df0b2; }
+    .alert.warn { background: rgba(247,201,72,.12); color: #ffe18a; }
+
+    .controls { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin: 18px 0 0; }
+    button {
+      border: 0;
+      border-radius: 10px;
+      padding: 11px 18px;
+      font-size: .95rem;
+      font-weight: 800;
+      cursor: pointer;
+      background: var(--accent);
+      color: #001118;
+    }
+    button.secondary { background: #27324a; color: var(--text); border: 1px solid #3a496c; }
+    button:hover { filter: brightness(1.05); }
+
+    .edit-panel { display: none; margin-top: 18px; background: var(--card-2); padding: 16px; border-radius: 12px; border: 1px solid var(--border); }
+    .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    @media (max-width: 700px) { .form-grid { grid-template-columns: 1fr; } }
+    label { display: block; color: var(--muted); font-size: .84rem; margin-bottom: 5px; }
+    input {
+      width: 100%; padding: 10px 11px; border-radius: 8px;
+      border: 1px solid #3b455f; background: #0d1220; color: var(--text);
+    }
+
+    .metric-value { font-size: 1.65rem; font-weight: 850; margin-top: 6px; }
+    .metric-label { color: var(--muted); font-size: .85rem; }
+    .note { color: var(--muted); font-size: .85rem; }
+    .bullet-list { margin: 8px 0 0 18px; padding: 0; }
+    .bullet-list li { margin: 8px 0; }
+
+    .footer { text-align: center; color: #69758a; font-size: .78rem; margin-top: 26px; }
+    a { color: var(--accent); }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>M2 Bull Dashboard v5</h1>
+    <div class="subtitle">Automated inputs • weighted regime score • per-metric freshness + broken-input detection</div>
+  </div>
+  <div id="last-update">Last updated: —</div>
+
+  <div id="bull-alert" class="alert bull">Bull setup strengthening: liquidity + ETF demand + trend are aligned.</div>
+  <div id="warn-alert" class="alert warn">Data freshness warning: one or more manual metrics are stale.</div>
+  <div id="broken-alert" class="alert" style="background:rgba(239,71,111,.12);color:#ff9db2;border-color:rgba(239,71,111,.35)">Input health warning: one or more data feeds or values appear broken.</div>
+
+  <div id="recommendation-card" class="recommendation-card">
+    <div class="rec-top">
+      <div>
+        <div class="rec-label">Weighted Market Recommendation</div>
+        <div id="rec-action" class="rec-action">Calculating…</div>
+        <div id="rec-rationale" class="note">Uses ETF flows, BTC trend, Treasury yields and M2. Broken critical inputs block the recommendation.</div>
+      </div>
+      <div style="text-align:right">
+        <div id="rec-badge" class="rec-badge rec-hold">WAIT</div>
+        <div id="rec-score" class="rec-score">Score: —</div>
+      </div>
+    </div>
+    <div class="score-bar"><div id="score-fill" class="score-fill"></div></div>
+    <div id="rec-confidence" class="note">Confidence: —</div>
+    <div id="rec-grid" class="rec-grid"></div>
+  </div>
+
+  <div class="grid">
+    <div class="card main-card">
+      <table>
+        <thead>
+          <tr>
+            <th>Metric</th>
+            <th>Current Value</th>
+            <th>Status</th>
+            <th>Signal</th>
+            <th>Freshness / Source</th>
+          </tr>
+        </thead>
+        <tbody id="data-body"></tbody>
+      </table>
+
+      <div class="controls">
+        <button onclick="refreshAll()">Refresh All Data</button>
+        <button class="secondary" onclick="toggleEdit()">Override Inputs</button>
+        <button class="secondary" onclick="resetManual()">Clear Overrides</button>
+      </div>
+
+      <div id="edit-panel" class="edit-panel">
+        <h3 style="margin-top:0">Manual Overrides</h3>
+        <div class="form-grid">
+          <div>
+            <label>BTC 200-week MA (USD)</label>
+            <input type="number" id="ma200w" step="1" />
+          </div>
+          <div>
+            <label>BTC ETF flow — last 5 trading sessions ($B)</label>
+            <input type="number" id="btc-etf-flow" step="0.01" />
+          </div>
+          <div>
+            <label>ETH ETF flow — last 5 trading sessions ($B)</label>
+            <input type="number" id="eth-etf-flow" step="0.01" />
+          </div>
+          <div>
+            <label>Global M2 YoY (%)</label>
+            <input type="number" id="m2-yoy" step="0.01" />
+          </div>
+          <div>
+            <label>10Y Treasury yield (%)</label>
+            <input type="number" id="us10y" step="0.01" />
+          </div>
+          <div>
+            <label>As-of date for values you change</label>
+            <input type="date" id="manual-date" />
+          </div>
+        </div>
+        <div class="controls" style="justify-content:flex-start">
+          <button onclick="saveManual()">Save Overrides</button>
+        </div>
+        <p class="note">All five inputs load automatically. Only fields you change here become overrides; each holds until an automated value with a later as-of date arrives. Use finalized ETF flows, not intraday estimates.</p>
+      </div>
+    </div>
+
+    <div class="card small-card">
+      <div class="metric-label">BTC</div>
+      <div id="btc-big" class="metric-value">—</div>
+      <div id="btc-sub" class="note">Live from CoinGecko</div>
+    </div>
+
+    <div class="card small-card">
+      <div class="metric-label">ETH</div>
+      <div id="eth-big" class="metric-value">—</div>
+      <div id="eth-sub" class="note">Live from CoinGecko</div>
+    </div>
+
+    <div class="card small-card">
+      <div class="metric-label">BTC / 200W MA</div>
+      <div id="ratio-big" class="metric-value">—</div>
+      <div class="note">Trend context, not a standalone buy/sell signal</div>
+    </div>
+
+    <div class="card wide-card">
+      <h3 style="margin-top:0">Interpretation</h3>
+      <ul class="bullet-list" id="insights"></ul>
+    </div>
+
+    <div class="card small-card">
+      <h3 style="margin-top:0">Data policy</h3>
+      <div class="note">
+        <strong>In-browser:</strong> BTC & ETH prices (CoinGecko), 200W MA from weekly candles (Binance.US, Coinbase fallback).<br><br>
+        <strong>Scheduled feed:</strong> 10Y yield (FRED), Global M2 proxy (FRED + ECB), BTC/ETH ETF flows (SoSoValue).<br><br>
+        Each metric carries its own observation date. Stale after 4 days (ETF), 5 days (10Y), 8 days (200W MA) or 100 days (M2, which publishes with a lag).
+      </div>
+    </div>
+
+    <div class="card main-card">
+      <h3 style="margin-top:0">Input Health</h3>
+      <div class="note">Green = usable, yellow = stale/suspicious, red = broken/missing. Live feeds also show the most recent successful fetch.</div>
+      <div id="health-panel" class="health-panel"></div>
+    </div>
+  </div>
+
+  <div class="footer">
+    Sources: CoinGecko (prices), Binance.US / Coinbase (weekly candles), SoSoValue (ETF flows), FRED + ECB (M2), FRED DGS10 (10Y yield).<br>
+    This dashboard is a market-monitoring aid, not investment advice.
+  </div>
+</div>
+
+<script>
+  // ---------------------------------------------------------------------------
+  // Data sources
+  //   Browser-direct (CORS-friendly, no key): CoinGecko prices, BTC weekly candles
+  //     for the 200W MA (Binance.US, Coinbase fallback).
+  //   Feed file (written by fetch_dashboard_data.py on a schedule): 10Y yield,
+  //     Global M2 proxy, BTC/ETH ETF 5-session flows, and a server-side 200W MA.
+  //   Manual overrides: any value you save by hand wins until a newer automated
+  //     observation arrives.
+  // ---------------------------------------------------------------------------
+  const DATA_FEED_URL = 'dashboard-data.json';   // same folder as this page; can be an absolute URL
+  const STORAGE_KEY = 'm2dash-v5';
+  const METRICS = ['ma200w', 'btcEtf5d', 'ethEtf5d', 'm2YoY', 'us10y'];
+  // Max age in days of the *observation date* before a metric is flagged stale.
+  // ETF: 4 covers a weekend; 10Y: FRED posts with a one-day lag; M2: monthly with ~5-7 week lag.
+  const MAX_AGE = { ma200w: 8, btcEtf5d: 4, ethEtf5d: 4, us10y: 5, m2YoY: 100 };
+  const RANGE = { ma200w: [1000, 500000], btcEtf5d: [-25, 25], ethEtf5d: [-15, 15], m2YoY: [-20, 30], us10y: [0, 20] };
+  const NAMES = { ma200w: 'BTC 200W MA', btcEtf5d: 'BTC ETF 5-session flow', ethEtf5d: 'ETH ETF 5-session flow', m2YoY: 'Global M2 YoY', us10y: 'U.S. 10Y yield' };
+
+  const DEFAULTS = {
+    btcPrice: null, ethPrice: null, btc24h: null, eth24h: null,
+    ma200w: 53000, btcEtf5d: 1.92, ethEtf5d: 0.70, m2YoY: 2.18, us10y: 4.70,
+    asOf: { ma200w: '2026-08-24', btcEtf5d: '2026-08-24', ethEtf5d: '2026-08-24', m2YoY: '2026-08-24', us10y: '2026-08-24' },
+    src:  { ma200w: 'Packaged default', btcEtf5d: 'Packaged default', ethEtf5d: 'Packaged default', m2YoY: 'Packaged default', us10y: 'Packaged default' },
+    liveLastSuccess: null, liveLastAttempt: null, liveError: null,
+    maError: null,
+    feed: { lastSuccess: null, generatedAt: null, error: null, errors: {} }
+  };
+
+  let data = structuredClone(DEFAULTS);
+
+  function loadSaved() {
+    try {
+      const v5 = localStorage.getItem(STORAGE_KEY);
+      if (v5) {
+        const s = JSON.parse(v5);
+        data = { ...data, ...s, asOf: { ...data.asOf, ...(s.asOf || {}) }, src: { ...data.src, ...(s.src || {}) }, feed: { ...data.feed, ...(s.feed || {}) } };
+        return;
+      }
+      // One-time migration from v4/v2: a single manualDate becomes each metric's as-of date.
+      const old = localStorage.getItem('m2dash-v4') || localStorage.getItem('m2dash-v2');
+      if (old) {
+        const s = JSON.parse(old);
+        METRICS.forEach(k => {
+          if (isFiniteNumber(s[k])) { data[k] = s[k]; data.asOf[k] = s.manualDate || data.asOf[k]; data.src[k] = 'Migrated from v4'; }
+        });
+      }
+    } catch (_) {}
+  }
+
+  function saveData() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch (_) {}
+  }
+
+  // ---------- helpers ----------
+  function fmtUSD(n) {
+    if (n == null || Number.isNaN(n)) return '—';
+    return '$' + Math.round(n).toLocaleString();
+  }
+  function isFiniteNumber(v) { return typeof v === 'number' && Number.isFinite(v); }
+  function validRange(v, min, max) { return isFiniteNumber(v) && v >= min && v <= max; }
+  function isoDate(ms) { return new Date(ms).toISOString().slice(0, 10); }
+  function daysOld(dateString) {
+    if (!dateString) return Infinity;
+    const d = new Date(String(dateString).slice(0, 10) + 'T00:00:00');
+    if (Number.isNaN(d.getTime())) return Infinity;
+    return Math.floor((Date.now() - d.getTime()) / 86400000);
+  }
+  function minutesSince(iso) {
+    if (!iso) return Infinity;
+    return Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
+  }
+  function pct(v) {
+    if (v == null) return '—';
+    const sign = v > 0 ? '+' : '';
+    return `${sign}${v.toFixed(2)}%`;
+  }
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+
+  // Automated values always replace defaults; a manual override holds until an automated
+  // observation with a later as-of date arrives (manual wins ties).
+  function applyMetric(key, value, asOf, source) {
+    const [min, max] = RANGE[key];
+    if (!validRange(value, min, max) || !asOf) return false;
+    const curAsOf = data.asOf[key];
+    if (data.src[key] === 'Manual override' && curAsOf && asOf <= curAsOf) return false;
+    data[key] = value;
+    data.asOf[key] = asOf;
+    data.src[key] = source;
+    return true;
+  }
+
+  // ---------- live crypto prices (CoinGecko) ----------
+  async function fetchCryptoPrices() {
+    data.liveLastAttempt = new Date().toISOString();
+    const url = 'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd&include_24hr_change=true';
+    const res = await fetch(url, { cache: 'no-store' });
+    if (!res.ok) throw new Error('CoinGecko HTTP ' + res.status);
+    const json = await res.json();
+    data.btcPrice = json.bitcoin?.usd ?? data.btcPrice;
+    data.ethPrice = json.ethereum?.usd ?? data.ethPrice;
+    data.btc24h = json.bitcoin?.usd_24h_change ?? data.btc24h;
+    data.eth24h = json.ethereum?.usd_24h_change ?? data.eth24h;
+    if (!validRange(data.btcPrice, 1000, 1000000) || !validRange(data.ethPrice, 50, 100000)) throw new Error('Live response missing or implausible prices');
+    data.liveLastSuccess = new Date().toISOString();
+    data.liveError = null;
+  }
+
+  // ---------- 200-week MA computed in the browser ----------
+  // Simple average of the last 200 *completed* weekly closes.
+  async function ma200wFromBinanceUS() {
+    const url = 'https://api.binance.us/api/v3/klines?symbol=BTCUSDT&interval=1w&limit=202';
+    const res = await fetch(url, { cache: 'no-store' });
+    if (!res.ok) throw new Error('Binance.US HTTP ' + res.status);
+    const rows = await res.json();
+    const closed = rows.filter(r => Number(r[6]) < Date.now());      // r[6] = candle close time
+    if (closed.length < 200) throw new Error(`Binance.US returned ${closed.length} closed weeks`);
+    const last = closed.slice(-200);
+    const avg = last.reduce((s, r) => s + parseFloat(r[4]), 0) / 200;   // r[4] = close
+    return { value: avg, asOf: isoDate(Number(last[199][6])), source: 'Auto: Binance.US weekly closes' };
+  }
+
+  async function ma200wFromCoinbase() {
+    // Coinbase caps daily candles at 300 per request, so page back ~1,430 days and take Sunday closes.
+    const DAY = 86400000;
+    const todayUTC = Math.floor(Date.now() / DAY) * DAY;
+    const candles = new Map();
+    for (let page = 0; page < 5; page++) {
+      const end = todayUTC - page * 290 * DAY;
+      const start = end - 290 * DAY;
+      const url = `https://api.exchange.coinbase.com/products/BTC-USD/candles?granularity=86400&start=${new Date(start).toISOString()}&end=${new Date(end).toISOString()}`;
+      const res = await fetch(url, { cache: 'no-store' });
+      if (!res.ok) throw new Error('Coinbase HTTP ' + res.status);
+      (await res.json()).forEach(c => candles.set(c[0] * 1000, c[4]));  // [time, low, high, open, close, vol]
+    }
+    const sundays = [...candles.entries()]
+      .filter(([t]) => t < todayUTC && new Date(t).getUTCDay() === 0)
+      .sort((a, b) => a[0] - b[0]);
+    if (sundays.length < 200) throw new Error(`Coinbase returned ${sundays.length} weekly closes`);
+    const last = sundays.slice(-200);
+    const avg = last.reduce((s, [, c]) => s + c, 0) / 200;
+    return { value: avg, asOf: isoDate(last[199][0]), source: 'Auto: Coinbase Sunday closes' };
+  }
+
+  async function fetchMA200w() {
+    let r;
+    try { r = await ma200wFromBinanceUS(); }
+    catch (e1) {
+      try { r = await ma200wFromCoinbase(); }
+      catch (e2) { throw new Error(`${e1.message}; fallback: ${e2.message}`); }
+    }
+    applyMetric('ma200w', Math.round(r.value), r.asOf, r.source);
+    data.maError = null;
+  }
+
+  // ---------- scheduled feed file (10Y, M2, ETF flows) ----------
+  async function fetchFeed() {
+    const res = await fetch(DATA_FEED_URL + (DATA_FEED_URL.includes('?') ? '&' : '?') + 't=' + Date.now(), { cache: 'no-store' });
+    if (!res.ok) throw new Error(`Feed HTTP ${res.status}`);
+    const json = await res.json();
+    const m = json.metrics || {};
+    METRICS.forEach(k => {
+      if (m[k] && isFiniteNumber(m[k].value)) applyMetric(k, m[k].value, m[k].asOf, 'Auto: ' + (m[k].source || 'feed'));
+    });
+    data.feed = { lastSuccess: new Date().toISOString(), generatedAt: json.generatedAt || null, error: null, errors: json.errors || {} };
+  }
+
+  async function refreshAll() {
+    const [prices, ma, feed] = await Promise.allSettled([fetchCryptoPrices(), fetchMA200w(), fetchFeed()]);
+    if (prices.status === 'rejected') data.liveError = prices.reason?.message || String(prices.reason);
+    if (ma.status === 'rejected') data.maError = ma.reason?.message || String(ma.reason);
+    if (feed.status === 'rejected') {
+      const msg = feed.reason?.message || String(feed.reason);
+      data.feed.error = location.protocol === 'file:' ? 'Open this page over http(s) — browsers block reading the feed file from file://' : msg;
+    }
+    saveData();
+    render();
+  }
+
+  // ---------- health & freshness ----------
+  function freshnessLabel(key) {
+    const age = daysOld(data.asOf[key]);
+    if (!Number.isFinite(age)) return `<span class="broken">No date</span>`;
+    if (age < 0) return `<span class="broken">Future date</span>`;
+    if (age <= MAX_AGE[key]) return `<span class="fresh">Fresh (${age}d)</span>`;
+    return `<span class="stale">Stale (${age}d)</span>`;
+  }
+
+  function metricHealth(key) {
+    const [min, max] = RANGE[key];
+    const age = daysOld(data.asOf[key]);
+    const src = data.src[key] || 'Unknown source';
+    if (!validRange(data[key], min, max)) return { level: 'bad', text: `${NAMES[key]} missing/out of plausible range` };
+    if (!Number.isFinite(age) || age < 0) return { level: 'bad', text: `${NAMES[key]} has a missing or future as-of date` };
+    const feedErr = data.feed.errors?.[key];
+    if (age > MAX_AGE[key]) return { level: 'warn', text: `${src} • observed ${data.asOf[key]} (${age}d old)${feedErr ? ' • feed: ' + feedErr : ''}` };
+    return { level: 'ok', text: `${src} • observed ${data.asOf[key]}` };
+  }
+
+  function validateInputs() {
+    const liveAge = minutesSince(data.liveLastSuccess);
+    const feedAgeH = data.feed.generatedAt ? Math.floor(minutesSince(data.feed.generatedAt) / 60) : Infinity;
+    const feedErrs = Object.keys(data.feed.errors || {});
+    return {
+      live: {
+        level: !isFiniteNumber(data.btcPrice) || !isFiniteNumber(data.ethPrice) || data.liveError ? 'bad' : liveAge > 30 ? 'warn' : 'ok',
+        text: data.liveError ? `Fetch failed: ${data.liveError}` : !isFiniteNumber(data.btcPrice) || !isFiniteNumber(data.ethPrice) ? 'Missing BTC/ETH live price' : liveAge > 30 ? `Last success ${liveAge} min ago` : `Live feed OK • ${liveAge} min old`
+      },
+      ma: data.maError && metricHealth('ma200w').level !== 'ok'
+        ? { ...metricHealth('ma200w'), text: metricHealth('ma200w').text + ` • candle fetch failed: ${data.maError}` }
+        : metricHealth('ma200w'),
+      btcEtf: metricHealth('btcEtf5d'),
+      ethEtf: metricHealth('ethEtf5d'),
+      m2: metricHealth('m2YoY'),
+      us10y: metricHealth('us10y'),
+      feed: {
+        level: data.feed.error && !data.feed.lastSuccess ? 'bad' : (data.feed.error || feedAgeH > 36 || feedErrs.length) ? 'warn' : 'ok',
+        text: data.feed.error ? `Feed not loaded: ${data.feed.error}`
+          : !data.feed.generatedAt ? 'No feed loaded yet'
+          : feedErrs.length ? `Generated ${feedAgeH}h ago • last run failed for: ${feedErrs.join(', ')}`
+          : feedAgeH > 36 ? `Feed generated ${feedAgeH}h ago — check the scheduled job`
+          : `Feed generated ${feedAgeH}h ago`
+      }
+    };
+  }
+
+  function healthLabel(h) {
+    const dot = h.level === 'ok' ? 'dot-ok' : h.level === 'warn' ? 'dot-warn' : 'dot-bad';
+    const word = h.level === 'ok' ? 'OK' : h.level === 'warn' ? 'CHECK' : 'BROKEN';
+    return `<span><span class="health-dot ${dot}"></span>${word}</span>`;
+  }
+
+  // ---------- status mappings (unchanged from v4) ----------
+  function getM2Status(v) {
+    if (v >= 5) return { label: 'Flood', cls: 'green' };
+    if (v >= 3) return { label: 'Rising', cls: 'yellow' };
+    return { label: 'Low', cls: 'red' };
+  }
+  function getRatioStatus(ratio) {
+    if (ratio >= 3.5) return { label: 'Euphoria', cls: 'red' };
+    if (ratio >= 2.5) return { label: 'Late Bull', cls: 'orange' };
+    if (ratio >= 1.5) return { label: 'Healthy Bull', cls: 'green' };
+    if (ratio >= 1.0) return { label: 'Early Bull', cls: 'yellow' };
+    return { label: 'Below Trend', cls: 'red' };
+  }
+  function getEtfStatus(v) {
+    if (v >= 1.0) return { label: 'Strong Inflow', cls: 'green' };
+    if (v >= 0.25) return { label: 'Positive', cls: 'yellow' };
+    if (v > -0.25) return { label: 'Flat', cls: 'yellow' };
+    return { label: 'Outflow', cls: 'red' };
+  }
+  function getYieldStatus(v) {
+    if (v < 4.25) return { label: 'Supportive', cls: 'green' };
+    if (v < 4.75) return { label: 'Mixed', cls: 'yellow' };
+    return { label: 'Headwind', cls: 'red' };
+  }
+
+  // ---------- scoring (unchanged from v4) ----------
+  function calculateRecommendation(ratio, health) {
+    const criticalKeys = ['live', 'ma', 'btcEtf', 'ethEtf', 'us10y'];
+    const brokenCritical = criticalKeys.filter(k => health[k]?.level === 'bad');
+    const warningCount = Object.entries(health).filter(([k, h]) => k !== 'feed' && h.level === 'warn').length;
+
+    const factors = [];
+    let score = 0;
+
+    let btcScore = data.btcEtf5d >= 1 ? 3 : data.btcEtf5d >= 0.25 ? 2 : data.btcEtf5d > -0.25 ? 0 : -3;
+    score += btcScore; factors.push({name:'BTC ETF', score:btcScore, max:3, text:data.btcEtf5d >= 1 ? 'Strong inflow' : data.btcEtf5d >= 0.25 ? 'Positive' : data.btcEtf5d > -0.25 ? 'Flat' : 'Outflow'});
+
+    let ethScore = data.ethEtf5d >= 0.5 ? 2 : data.ethEtf5d >= 0.1 ? 1 : data.ethEtf5d > -0.1 ? 0 : -2;
+    score += ethScore; factors.push({name:'ETH ETF', score:ethScore, max:2, text:data.ethEtf5d >= 0.5 ? 'Strong inflow' : data.ethEtf5d >= 0.1 ? 'Positive' : data.ethEtf5d > -0.1 ? 'Flat' : 'Outflow'});
+
+    let trendScore = ratio == null ? 0 : ratio >= 3.5 ? -2 : ratio >= 2.5 ? -1 : ratio >= 1.5 ? 2 : ratio >= 1.0 ? 1 : -1;
+    score += trendScore; factors.push({name:'BTC Trend', score:trendScore, max:2, text:ratio == null ? 'Unavailable' : ratio >= 3.5 ? 'Euphoria risk' : ratio >= 2.5 ? 'Late bull' : ratio >= 1.5 ? 'Healthy bull' : ratio >= 1 ? 'Early bull' : 'Below trend'});
+
+    let yieldScore = data.us10y < 4.25 ? 2 : data.us10y < 4.75 ? 0 : -2;
+    score += yieldScore; factors.push({name:'10Y Yield', score:yieldScore, max:2, text:data.us10y < 4.25 ? 'Supportive' : data.us10y < 4.75 ? 'Mixed' : 'Headwind'});
+
+    let m2Score = data.m2YoY >= 5 ? 2 : data.m2YoY >= 3 ? 1 : 0;
+    score += m2Score; factors.push({name:'Global M2', score:m2Score, max:2, text:data.m2YoY >= 5 ? 'Liquidity flood' : data.m2YoY >= 3 ? 'Improving' : 'Not yet accelerating'});
+
+    let action, cls, badge;
+    if (brokenCritical.length) {
+      action = 'DATA ISSUE — NO SIGNAL'; cls = 'rec-data'; badge = 'CHECK INPUTS';
+    } else if (score >= 8) {
+      action = 'BUY AGGRESSIVELY / DCA'; cls = 'rec-aggressive'; badge = 'STRONG RISK-ON';
+    } else if (score >= 5) {
+      action = 'BUY / DCA'; cls = 'rec-buy'; badge = 'RISK-ON';
+    } else if (score >= 2) {
+      action = 'HOLD / SELECTIVE BUY'; cls = 'rec-hold'; badge = 'NEUTRAL+';
+    } else {
+      action = 'DEFENSIVE / PAUSE NEW BUYS'; cls = 'rec-defensive'; badge = 'RISK-OFF';
+    }
+
+    if (!brokenCritical.length && warningCount >= 2 && score >= 8) {
+      action = 'BUY / DCA'; cls = 'rec-buy'; badge = 'RISK-ON • STALE DATA';
+    }
+    if (!brokenCritical.length && ratio != null && ratio >= 3.5) {
+      action = score < 2 ? 'DEFENSIVE / PAUSE NEW BUYS' : 'HOLD / TAKE RISK DOWN';
+      cls = score < 2 ? 'rec-defensive' : 'rec-hold'; badge = 'EUPHORIA CAP';
+    }
+    if (!brokenCritical.length && data.btcEtf5d < -0.25 && data.ethEtf5d < -0.1 && score >= 5) {
+      action = 'HOLD / SELECTIVE BUY'; cls = 'rec-hold'; badge = 'ETF OUTFLOW CAP';
+    }
+
+    const minScore = -10, maxScore = 11;
+    const pctScore = Math.max(0, Math.min(100, ((score - minScore) / (maxScore - minScore)) * 100));
+    const confidence = brokenCritical.length ? 'Low — critical input broken' : warningCount >= 2 ? 'Medium — multiple inputs stale/suspicious' : warningCount === 1 ? 'Medium-high — one input needs review' : 'High — required inputs healthy';
+    return { score, action, cls, badge, factors, pctScore, confidence, brokenCritical };
+  }
+
+  // ---------- render ----------
+  function render() {
+    const ratio = (data.btcPrice && data.ma200w) ? data.btcPrice / data.ma200w : null;
+    const m2 = getM2Status(data.m2YoY);
+    const rStatus = ratio == null ? { label: 'Unavailable', cls: 'yellow' } : getRatioStatus(ratio);
+    const btcEtf = getEtfStatus(data.btcEtf5d);
+    const ethEtf = getEtfStatus(data.ethEtf5d);
+    const y10 = getYieldStatus(data.us10y);
+    const health = validateInputs();
+    const recommendation = calculateRecommendation(ratio, health);
+    const srcTxt = k => escapeHtml(data.src[k] || '—');
+
+    document.getElementById('rec-action').textContent = recommendation.action;
+    const recBadge = document.getElementById('rec-badge');
+    recBadge.textContent = recommendation.badge;
+    recBadge.className = `rec-badge ${recommendation.cls}`;
+    document.getElementById('rec-score').textContent = recommendation.brokenCritical.length ? 'Score withheld' : `Score: ${recommendation.score} / 11`;
+    document.getElementById('score-fill').style.width = recommendation.brokenCritical.length ? '0%' : `${recommendation.pctScore.toFixed(0)}%`;
+    document.getElementById('rec-confidence').textContent = `Confidence: ${recommendation.confidence}`;
+    document.getElementById('rec-rationale').textContent = recommendation.brokenCritical.length
+      ? `Critical inputs broken: ${recommendation.brokenCritical.join(', ')}. Repair data before acting on the dashboard.`
+      : recommendation.action.includes('AGGRESSIVELY')
+        ? 'Multiple high-weight signals are aligned. This is a favorable accumulation regime, not a guarantee of short-term gains.'
+        : recommendation.action.startsWith('BUY')
+          ? 'Institutional/trend conditions are favorable enough for normal accumulation, but not all signals are maximally supportive.'
+          : recommendation.action.startsWith('HOLD')
+            ? 'Signals are mixed. Favor patience, selective entries, and existing-position management.'
+            : 'Risk signals outweigh supportive signals. Preserve capital and wait for improvement.';
+    document.getElementById('rec-grid').innerHTML = recommendation.factors.map(f => {
+      const sign = f.score > 0 ? '+' : '';
+      return `<div class="rec-factor"><strong>${f.name}</strong><span>${f.text}</span><div class="source">Score: ${sign}${f.score}</div></div>`;
+    }).join('');
+
+    const rows = [
+      {
+        metric: 'Global M2 YoY',
+        value: isFiniteNumber(data.m2YoY) ? `${data.m2YoY.toFixed(2)}%` : '—',
+        status: m2,
+        signal: data.m2YoY >= 5 ? 'Strong liquidity tailwind' : data.m2YoY >= 3 ? 'Liquidity improving' : 'Wait for stronger acceleration',
+        source: `${healthLabel(health.m2)} • ${freshnessLabel('m2YoY')} • ${srcTxt('m2YoY')}`
+      },
+      {
+        metric: 'BTC vs 200W MA',
+        value: ratio ? `${fmtUSD(data.btcPrice)} / ${fmtUSD(data.ma200w)} = ${ratio.toFixed(2)}x` : '—',
+        status: rStatus,
+        signal: ratio == null ? 'Need price / MA' : ratio >= 3.5 ? 'Risk management priority' : ratio >= 2.5 ? 'Late-cycle caution' : ratio >= 1.5 ? 'Trend constructive' : 'Accumulate selectively',
+        source: `${healthLabel(health.live)} BTC live • ${healthLabel(health.ma)} 200W MA • ${freshnessLabel('ma200w')} • ${srcTxt('ma200w')}`
+      },
+      {
+        metric: 'BTC ETF — last 5 sessions',
+        value: isFiniteNumber(data.btcEtf5d) ? `${data.btcEtf5d >= 0 ? '+' : '-'}$${Math.abs(data.btcEtf5d).toFixed(2)}B` : '—',
+        status: btcEtf,
+        signal: data.btcEtf5d >= 1 ? 'Institutions buying aggressively' : data.btcEtf5d >= 0 ? 'Institutional demand positive' : 'Institutional demand weakening',
+        source: `${healthLabel(health.btcEtf)} • ${freshnessLabel('btcEtf5d')} • ${srcTxt('btcEtf5d')}`
+      },
+      {
+        metric: 'ETH ETF — last 5 sessions',
+        value: isFiniteNumber(data.ethEtf5d) ? `${data.ethEtf5d >= 0 ? '+' : '-'}$${Math.abs(data.ethEtf5d).toFixed(2)}B` : '—',
+        status: ethEtf,
+        signal: data.ethEtf5d >= 0.5 ? 'ETH institutional bid strengthening' : data.ethEtf5d >= 0 ? 'ETH demand positive' : 'ETH flow caution',
+        source: `${healthLabel(health.ethEtf)} • ${freshnessLabel('ethEtf5d')} • ${srcTxt('ethEtf5d')}`
+      },
+      {
+        metric: 'U.S. 10Y Treasury',
+        value: isFiniteNumber(data.us10y) ? `${data.us10y.toFixed(2)}%` : '—',
+        status: y10,
+        signal: data.us10y < 4.25 ? 'Macro tailwind' : data.us10y < 4.75 ? 'Watch yields closely' : 'Rates are a crypto headwind',
+        source: `${healthLabel(health.us10y)} • ${freshnessLabel('us10y')} • ${srcTxt('us10y')}`
+      }
+    ];
+
+    document.getElementById('data-body').innerHTML = rows.map(r => `
+      <tr>
+        <td><strong>${r.metric}</strong></td>
+        <td>${r.value}</td>
+        <td><span class="status ${r.status.cls}">${r.status.label}</span></td>
+        <td class="signal">${r.signal}</td>
+        <td><div class="source">${r.source}</div></td>
+      </tr>`).join('');
+
+    document.getElementById('btc-big').textContent = fmtUSD(data.btcPrice);
+    document.getElementById('btc-sub').textContent = `24h: ${pct(data.btc24h)}`;
+    document.getElementById('eth-big').textContent = fmtUSD(data.ethPrice);
+    document.getElementById('eth-sub').textContent = `24h: ${pct(data.eth24h)}`;
+    document.getElementById('ratio-big').textContent = ratio ? `${ratio.toFixed(2)}x` : '—';
+
+    document.getElementById('bull-alert').style.display = (!recommendation.brokenCritical.length && recommendation.score >= 5) ? 'block' : 'none';
+    const staleKeys = METRICS.filter(k => daysOld(data.asOf[k]) > MAX_AGE[k]);
+    const warn = document.getElementById('warn-alert');
+    warn.textContent = `Data freshness warning: stale inputs — ${staleKeys.map(k => NAMES[k]).join(', ')}.`;
+    warn.style.display = staleKeys.length ? 'block' : 'none';
+    const brokenCount = Object.values(health).filter(h => h.level === 'bad').length;
+    document.getElementById('broken-alert').style.display = brokenCount > 0 ? 'block' : 'none';
+
+    const healthNames = { live:'CoinGecko live prices', ma:'BTC 200W MA', btcEtf:'BTC ETF 5-session flow', ethEtf:'ETH ETF 5-session flow', m2:'Global M2 YoY', us10y:'U.S. 10Y yield', feed:'Scheduled data feed' };
+    document.getElementById('health-panel').innerHTML = Object.entries(health).map(([k,h]) => `
+      <div class="health-item"><div class="health-title">${healthLabel(h)} ${healthNames[k]}</div><div class="note">${escapeHtml(h.text)}</div></div>`).join('');
+
+    const insights = [];
+    if (ratio != null) insights.push(`BTC is ${ratio.toFixed(2)}× its 200-week MA: ${rStatus.label.toLowerCase()} territory.`);
+    if (isFiniteNumber(data.btcEtf5d)) insights.push(`BTC ETF flow over the last 5 trading sessions is ${data.btcEtf5d >= 0 ? 'positive' : 'negative'} at ${data.btcEtf5d >= 0 ? '+' : '-'}$${Math.abs(data.btcEtf5d).toFixed(2)}B.`);
+    if (isFiniteNumber(data.ethEtf5d)) insights.push(`ETH ETF flow over the last 5 trading sessions is ${data.ethEtf5d >= 0 ? 'positive' : 'negative'} at ${data.ethEtf5d >= 0 ? '+' : '-'}$${Math.abs(data.ethEtf5d).toFixed(2)}B.`);
+    if (isFiniteNumber(data.m2YoY)) insights.push(`Global M2 YoY is ${data.m2YoY.toFixed(2)}%; the dashboard only treats ≥5% as a strong liquidity-flood signal.`);
+    if (isFiniteNumber(data.us10y)) insights.push(`10Y Treasury is ${data.us10y.toFixed(2)}%; falling yields would improve the macro backdrop for crypto.`);
+    document.getElementById('insights').innerHTML = insights.map(i => `<li>${i}</li>`).join('');
+
+    const liveText = data.liveLastSuccess ? ` • Live prices last OK: ${new Date(data.liveLastSuccess).toLocaleTimeString()}` : ' • Live prices: no successful fetch yet';
+    const feedText = data.feed.generatedAt ? ` • Feed generated: ${new Date(data.feed.generatedAt).toLocaleString()}` : '';
+    document.getElementById('last-update').textContent = `Dashboard rendered: ${new Date().toLocaleString()}${liveText}${feedText}`;
+  }
+
+  // ---------- manual overrides ----------
+  const FORM = { ma200w: 'ma200w', btcEtf5d: 'btc-etf-flow', ethEtf5d: 'eth-etf-flow', m2YoY: 'm2-yoy', us10y: 'us10y' };
+
+  function toggleEdit() {
+    const p = document.getElementById('edit-panel');
+    p.style.display = p.style.display === 'none' || !p.style.display ? 'block' : 'none';
+    if (p.style.display === 'block') populateForm();
+  }
+
+  function populateForm() {
+    METRICS.forEach(k => { document.getElementById(FORM[k]).value = data[k] ?? ''; });
+    document.getElementById('manual-date').value = new Date().toISOString().slice(0, 10);
+  }
+
+  // Only fields you actually change become manual overrides, stamped with the as-of date.
+  function saveManual() {
+    const date = document.getElementById('manual-date').value || new Date().toISOString().slice(0, 10);
+    METRICS.forEach(k => {
+      const v = parseFloat(document.getElementById(FORM[k]).value);
+      if (!Number.isFinite(v) || v === data[k]) return;
+      if (k === 'ma200w' && v <= 0) return;
+      data[k] = v; data.asOf[k] = date; data.src[k] = 'Manual override';
+    });
+    saveData();
+    render();
+    toggleEdit();
+  }
+
+  function resetManual() {
+    if (!confirm('Clear manual overrides and reload automated data?')) return;
+    METRICS.forEach(k => { data[k] = DEFAULTS[k]; data.asOf[k] = DEFAULTS.asOf[k]; data.src[k] = DEFAULTS.src[k]; });
+    saveData();
+    refreshAll();
+  }
+
+  loadSaved();
+  render();
+  refreshAll();
+  setInterval(refreshAll, 15 * 60 * 1000);
+</script>
+
+</body>
+</html>
