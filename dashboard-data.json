@@ -1,0 +1,36 @@
+{
+  "generatedAt": "2026-09-21T16:55:22+00:00",
+  "metrics": {
+    "us10y": {
+      "value": 4.94,
+      "asOf": "2026-09-17",
+      "source": "FRED DGS10",
+      "retrievedAt": "2026-09-21T16:55:22+00:00"
+    },
+    "m2YoY": {
+      "value": 3.94,
+      "asOf": "2026-07-01",
+      "source": "FRED M2SL + ECB M2 in USD",
+      "retrievedAt": "2026-09-21T16:55:22+00:00"
+    },
+    "btcEtf5d": {
+      "value": 0.006,
+      "asOf": "2026-09-18",
+      "source": "SoSoValue us-btc-spot, sessions 2026-09-14..2026-09-18",
+      "retrievedAt": "2026-09-21T16:55:22+00:00"
+    },
+    "ethEtf5d": {
+      "value": -0.14,
+      "asOf": "2026-09-18",
+      "source": "SoSoValue us-eth-spot, sessions 2026-09-14..2026-09-18",
+      "retrievedAt": "2026-09-21T16:55:22+00:00"
+    },
+    "ma200w": {
+      "value": 65501,
+      "asOf": "2026-09-20",
+      "source": "Binance.US weekly closes (server)",
+      "retrievedAt": "2026-09-21T16:55:22+00:00"
+    }
+  },
+  "errors": {}
+}
