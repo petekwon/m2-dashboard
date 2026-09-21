@@ -160,14 +160,14 @@
   </div>
   <div id="last-update">Last updated: —</div>
 
-  <div id="bull-alert" class="alert bull">Bull setup strengthening: liquidity + ETF demand + trend are aligned.</div>
+  
   <div id="warn-alert" class="alert warn">Data freshness warning: one or more manual metrics are stale.</div>
   <div id="broken-alert" class="alert" style="background:rgba(239,71,111,.12);color:#ff9db2;border-color:rgba(239,71,111,.35)">Input health warning: one or more data feeds or values appear broken.</div>
 
   <div id="recommendation-card" class="recommendation-card">
     <div class="rec-top">
       <div>
-        <div class="rec-label">Weighted Market Recommendation</div>
+        <div class="rec-label">Weighted Market Regime Signal</div>
         <div id="rec-action" class="rec-action">Calculating…</div>
         <div id="rec-rationale" class="note">Uses ETF flows, BTC trend, Treasury yields and M2. Broken critical inputs block the recommendation.</div>
       </div>
@@ -177,7 +177,7 @@
       </div>
     </div>
     <div class="score-bar"><div id="score-fill" class="score-fill"></div></div>
-    <div id="rec-confidence" class="note">Confidence: —</div>
+    <div id="rec-confidence" class="note">Input quality: —</div>
     <div id="rec-grid" class="rec-grid"></div>
   </div>
 
@@ -218,7 +218,7 @@
             <input type="number" id="eth-etf-flow" step="0.01" />
           </div>
           <div>
-            <label>Global M2 YoY (%)</label>
+            <label>US + Euro Area M2 YoY (USD-adjusted) (%)</label>
             <input type="number" id="m2-yoy" step="0.01" />
           </div>
           <div>
@@ -589,7 +589,7 @@
       action = 'HOLD / SELECTIVE BUY'; cls = 'rec-hold'; badge = 'ETF OUTFLOW CAP';
     }
 
-    const minScore = -10, maxScore = 11;
+    const minScore = -9, maxScore = 11;
     const pctScore = Math.max(0, Math.min(100, ((score - minScore) / (maxScore - minScore)) * 100));
     const confidence = brokenCritical.length ? 'Low — critical input broken' : warningCount >= 2 ? 'Medium — multiple inputs stale/suspicious' : warningCount === 1 ? 'Medium-high — one input needs review' : 'High — required inputs healthy';
     return { score, action, cls, badge, factors, pctScore, confidence, brokenCritical };
@@ -613,7 +613,7 @@
     recBadge.className = `rec-badge ${recommendation.cls}`;
     document.getElementById('rec-score').textContent = recommendation.brokenCritical.length ? 'Score withheld' : `Score: ${recommendation.score} / 11`;
     document.getElementById('score-fill').style.width = recommendation.brokenCritical.length ? '0%' : `${recommendation.pctScore.toFixed(0)}%`;
-    document.getElementById('rec-confidence').textContent = `Confidence: ${recommendation.confidence}`;
+    document.getElementById('rec-confidence').textContent = `Input quality: ${recommendation.confidence}`;
     document.getElementById('rec-rationale').textContent = recommendation.brokenCritical.length
       ? `Critical inputs broken: ${recommendation.brokenCritical.join(', ')}. Repair data before acting on the dashboard.`
       : recommendation.action.includes('AGGRESSIVELY')
@@ -647,7 +647,7 @@
         metric: 'BTC ETF — last 5 sessions',
         value: isFiniteNumber(data.btcEtf5d) ? `${data.btcEtf5d >= 0 ? '+' : '-'}$${Math.abs(data.btcEtf5d).toFixed(2)}B` : '—',
         status: btcEtf,
-        signal: data.btcEtf5d >= 1 ? 'Institutions buying aggressively' : data.btcEtf5d >= 0 ? 'Institutional demand positive' : 'Institutional demand weakening',
+        signal: data.btcEtf5d >= 1 ? 'Institutions buying aggressively' : data.btcEtf5d >= 0 ? 'Spot ETF demand strong' : 'Institutional demand weakening',
         source: `${healthLabel(health.btcEtf)} • ${freshnessLabel('btcEtf5d')} • ${srcTxt('btcEtf5d')}`
       },
       {
