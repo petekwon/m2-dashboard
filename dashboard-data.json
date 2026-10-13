@@ -1,17 +1,17 @@
 {
-  "generatedAt": "2026-10-13T03:20:08+00:00",
+  "generatedAt": "2026-10-13T19:55:18+00:00",
   "metrics": {
     "us10y": {
       "value": 5.22,
       "asOf": "2026-10-08",
       "source": "FRED DGS10",
-      "retrievedAt": "2026-10-13T03:20:08+00:00"
+      "retrievedAt": "2026-10-13T19:55:18+00:00"
     },
     "m2YoY": {
       "value": 4.85,
       "asOf": "2026-08-01",
       "source": "FRED M2SL + ECB M2 in USD",
-      "retrievedAt": "2026-10-13T03:20:08+00:00"
+      "retrievedAt": "2026-10-13T19:55:18+00:00"
     },
     "btcEtf5d": {
       "value": -0.166,
@@ -29,11 +29,11 @@
       "value": 66521,
       "asOf": "2026-10-11",
       "source": "Binance.US weekly closes (server)",
-      "retrievedAt": "2026-10-13T03:20:08+00:00"
+      "retrievedAt": "2026-10-13T19:55:18+00:00"
     }
   },
   "errors": {
-    "btcEtf5d": "HTTPError: HTTP Error 404: Not Found",
-    "ethEtf5d": "HTTPError: HTTP Error 404: Not Found"
+    "btcEtf5d": "HTTPError: HTTP Error 403: Forbidden",
+    "ethEtf5d": "HTTPError: HTTP Error 403: Forbidden"
   }
 }
