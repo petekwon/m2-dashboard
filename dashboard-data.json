@@ -1,17 +1,17 @@
 {
-  "generatedAt": "2026-10-22T01:10:30+00:00",
+  "generatedAt": "2026-10-22T18:06:26+00:00",
   "metrics": {
     "us10y": {
-      "value": 5.15,
-      "asOf": "2026-10-19",
+      "value": 5.12,
+      "asOf": "2026-10-20",
       "source": "FRED DGS10",
-      "retrievedAt": "2026-10-21T01:14:35+00:00"
+      "retrievedAt": "2026-10-22T18:06:26+00:00"
     },
     "m2YoY": {
       "value": 4.85,
       "asOf": "2026-08-01",
       "source": "FRED M2SL + ECB M2 in USD",
-      "retrievedAt": "2026-10-21T01:14:35+00:00"
+      "retrievedAt": "2026-10-22T18:06:26+00:00"
     },
     "btcEtf5d": {
       "value": -0.166,
@@ -29,12 +29,10 @@
       "value": 66848,
       "asOf": "2026-10-18",
       "source": "Binance.US weekly closes (server)",
-      "retrievedAt": "2026-10-22T01:10:30+00:00"
+      "retrievedAt": "2026-10-22T18:06:26+00:00"
     }
   },
   "errors": {
-    "us10y": "JSONDecodeError: Expecting value: line 1 column 1 (char 0)",
-    "m2YoY": "JSONDecodeError: Expecting value: line 1 column 1 (char 0)",
     "btcEtf5d": "HTTPError: HTTP Error 403: Forbidden",
     "ethEtf5d": "HTTPError: HTTP Error 403: Forbidden"
   }
