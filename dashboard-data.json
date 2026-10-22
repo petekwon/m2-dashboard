@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-21T18:10:19+00:00",
+  "generatedAt": "2026-10-22T01:10:30+00:00",
   "metrics": {
     "us10y": {
       "value": 5.15,
@@ -29,7 +29,7 @@
       "value": 66848,
       "asOf": "2026-10-18",
       "source": "Binance.US weekly closes (server)",
-      "retrievedAt": "2026-10-21T18:10:19+00:00"
+      "retrievedAt": "2026-10-22T01:10:30+00:00"
     }
   },
   "errors": {
