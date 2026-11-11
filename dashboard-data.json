@@ -1,17 +1,17 @@
 {
-  "generatedAt": "2026-11-10T20:32:10+00:00",
+  "generatedAt": "2026-11-11T02:29:47+00:00",
   "metrics": {
     "us10y": {
-      "value": 4.86,
-      "asOf": "2026-11-06",
+      "value": 4.88,
+      "asOf": "2026-11-09",
       "source": "FRED DGS10",
-      "retrievedAt": "2026-11-10T20:32:10+00:00"
+      "retrievedAt": "2026-11-11T02:29:47+00:00"
     },
     "m2YoY": {
       "value": 4.17,
       "asOf": "2026-09-01",
       "source": "FRED M2SL + ECB M2 in USD",
-      "retrievedAt": "2026-11-10T20:32:10+00:00"
+      "retrievedAt": "2026-11-11T02:29:47+00:00"
     },
     "btcEtf5d": {
       "value": -0.166,
@@ -29,7 +29,7 @@
       "value": 67762,
       "asOf": "2026-11-08",
       "source": "Binance.US weekly closes (server)",
-      "retrievedAt": "2026-11-10T20:32:10+00:00"
+      "retrievedAt": "2026-11-11T02:29:47+00:00"
     }
   },
   "errors": {
